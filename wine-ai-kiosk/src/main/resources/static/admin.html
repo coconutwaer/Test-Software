@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vinothek AI — Admin</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+
+<!-- Admin Header -->
+<header class="admin-header">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:1.5rem;">🍷</span>
+    <div>
+      <h1 style="font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold-300);">Vinothek AI — Admin</h1>
+      <p style="font-size:0.78rem;color:var(--text-muted);">Wine inventory management</p>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <button class="btn btn-primary" id="addWineBtn">+ Add Wine</button>
+    <a href="/index.html" style="font-size:0.78rem;color:var(--text-muted);text-decoration:none;padding:8px 14px;border:1px solid var(--border-color);border-radius:6px;">← Kiosk</a>
+  </div>
+</header>
+
+<!-- Admin Content -->
+<div class="admin-content">
+  <div style="overflow-x:auto;">
+    <table class="data-table" id="wineTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Winery</th>
+          <th>Type</th>
+          <th>Country / Region</th>
+          <th>Grape</th>
+          <th>Sweetness</th>
+          <th>Price</th>
+          <th>Rating</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="wineTableBody">
+        <tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:30px;">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Wine Form Modal -->
+<div class="modal-overlay" id="formModal">
+  <div class="modal" style="max-width:700px;">
+    <button class="modal-close" id="closeFormModal">✕</button>
+    <div class="modal-header">
+      <h2 id="formTitle" style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--gold-300);">Add Wine</h2>
+    </div>
+    <div class="modal-body">
+      <form id="wineForm">
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Wine Name *</label>
+            <input type="text" class="form-control" id="f-name" required placeholder="e.g. Riesling Kabinett" />
+          </div>
+          <div class="form-group">
+            <label>Winery</label>
+            <input type="text" class="form-control" id="f-winery" placeholder="Producer name" />
+          </div>
+          <div class="form-group">
+            <label>Country</label>
+            <select class="form-control" id="f-country">
+              <option value="">Select country</option>
+              <option>Germany</option><option>Italy</option><option>France</option>
+              <option>Austria</option><option>South Africa</option><option>Chile</option>
+              <option>USA</option><option>Australia</option><option>New Zealand</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Region</label>
+            <input type="text" class="form-control" id="f-region" placeholder="e.g. Rheingau" />
+          </div>
+          <div class="form-group">
+            <label>Grape Variety</label>
+            <input type="text" class="form-control" id="f-grapeVariety" placeholder="e.g. Riesling" />
+          </div>
+          <div class="form-group">
+            <label>Wine Type</label>
+            <select class="form-control" id="f-wineType">
+              <option value="">Select type</option>
+              <option>Red</option><option>White</option><option>Rosé</option><option>Sparkling</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sweetness</label>
+            <select class="form-control" id="f-sweetness">
+              <option value="">Select sweetness</option>
+              <option>Dry</option><option>Semi-Dry</option><option>Sweet</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Body</label>
+            <select class="form-control" id="f-body">
+              <option value="">Select body</option>
+              <option>Light</option><option>Medium</option><option>Full</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Acidity</label>
+            <select class="form-control" id="f-acidity">
+              <option value="">Select acidity</option>
+              <option>Low</option><option>Medium</option><option>High</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tannin</label>
+            <select class="form-control" id="f-tannin">
+              <option value="">Select tannin</option>
+              <option>Low</option><option>Medium</option><option>High</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Price (€) *</label>
+            <input type="number" class="form-control" id="f-price" step="0.01" min="0" required placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label>Rating (0–5)</label>
+            <input type="number" class="form-control" id="f-rating" step="0.1" min="0" max="5" placeholder="4.0" />
+          </div>
+          <div class="form-group full-width">
+            <label>Flavor Notes</label>
+            <input type="text" class="form-control" id="f-flavorNotes" placeholder="e.g. Cherry, blackberry, vanilla" />
+          </div>
+          <div class="form-group full-width">
+            <label>Food Pairing</label>
+            <input type="text" class="form-control" id="f-foodPairing" placeholder="e.g. Pasta, grilled fish" />
+          </div>
+          <div class="form-group full-width">
+            <label>Image URL</label>
+            <input type="text" class="form-control" id="f-imageUrl" placeholder="/images/wine.jpg" />
+          </div>
+          <div class="form-group full-width">
+            <label>Description</label>
+            <textarea class="form-control" id="f-description" rows="3" placeholder="Full wine description…"></textarea>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-color);">
+          <button type="button" class="btn" id="cancelForm" style="background:none;border:1px solid var(--border-color);color:var(--text-secondary);">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveWineBtn">💾 Save Wine</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>

@@ -31,7 +31,7 @@ public class AdminController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Wine> updateWine(@PathVariable Long id, @RequestBody Wine wine) {
-        if (!wineService.getWineById(id).isPresent()) {
+        if (wineService.getWineById(id).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         wine.setId(id);
@@ -41,7 +41,7 @@ public class AdminController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteWine(@PathVariable Long id) {
-        if (!wineService.getWineById(id).isPresent()) {
+        if (wineService.getWineById(id).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         wineService.deleteWine(id);

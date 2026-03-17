@@ -60,11 +60,19 @@ function renderTable(wines) {
       <td style="color:var(--gold-300);font-weight:700;">€${parseFloat(w.price || 0).toFixed(2)}</td>
       <td>⭐ ${w.rating || '—'}</td>
       <td>
-        <button class="btn btn-sm btn-edit" onclick="editWine(${w.id})">✏ Edit</button>
-        <button class="btn btn-sm btn-delete" onclick="deleteWine(${w.id}, '${escapeAttr(w.name)}')" style="margin-left:4px;">🗑 Delete</button>
+        <button class="btn btn-sm btn-edit" data-id="${w.id}">✏ Edit</button>
+        <button class="btn btn-sm btn-delete" data-id="${w.id}" data-name="${escapeHtml(w.name)}" style="margin-left:4px;">🗑 Delete</button>
       </td>
     </tr>
   `).join('');
+
+  // Attach event listeners to avoid inline onclick
+  wineTableBody.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.addEventListener('click', () => editWine(parseInt(btn.dataset.id, 10)));
+  });
+  wineTableBody.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', () => deleteWine(parseInt(btn.dataset.id, 10), btn.dataset.name));
+  });
 }
 
 // ---- Open Add Form ----
@@ -225,9 +233,4 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-function escapeAttr(str) {
-  if (!str) return '';
-  return String(str).replace(/'/g, "\\'");
 }

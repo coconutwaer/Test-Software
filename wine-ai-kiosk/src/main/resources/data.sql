@@ -107,7 +107,7 @@ SELECT * FROM (VALUES
      'An elegant Pinot Blanc from Baden''s warmest wine region. Richer and rounder than Alsatian styles with a lovely creamy texture.'),
 
     ('Silvaner Kabinett',
-     'Weingut Wirsching', 'Germany', 'Franken', 'Riesling', 'White', 'Semi-Dry', 'Light', 'Medium', 'Low',
+     'Weingut Wirsching', 'Germany', 'Franken', 'Silvaner', 'White', 'Semi-Dry', 'Light', 'Medium', 'Low',
      'Herbs, earthy mineral, green apple, mild citrus',
      'White asparagus, river fish, light vegetarian dishes',
      11.20, 3.8, '/images/silvaner-wirsching.jpg',

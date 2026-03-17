@@ -357,10 +357,14 @@ function renderMarkdown(text) {
   if (!text) return '';
   // Bold
   let html = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  // Numbered list
-  html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
-  html = html.replace(/(<li>.*<\/li>)/s, '<ol>$1</ol>');
-  // Line breaks
+  // Numbered list: collect consecutive numbered-list lines and wrap in <ol>
+  html = html.replace(/((?:^\d+\.\s+.+$\n?)+)/gm, (block) => {
+    const items = block.trim().split('\n').map(line =>
+      `<li>${line.replace(/^\d+\.\s+/, '')}</li>`
+    ).join('');
+    return `<ol style="padding-left:20px;margin:6px 0;">${items}</ol>`;
+  });
+  // Line breaks (outside of already-replaced blocks)
   html = html.replace(/\n/g, '<br>');
   return html;
 }

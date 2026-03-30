@@ -24,7 +24,6 @@ import hashlib
 import io
 import json
 import logging
-import os
 import sys
 import time
 from pathlib import Path
@@ -82,7 +81,7 @@ def setup_logging(log_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def file_md5(path: Path) -> str:
-    h = hashlib.md5()
+    h = hashlib.md5(usedforsecurity=False)
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(65536), b""):
             h.update(chunk)
@@ -149,9 +148,6 @@ def load_models() -> None:
 # Core image processing helpers
 # ---------------------------------------------------------------------------
 
-def pil_to_cv2_rgb(img: Image.Image) -> np.ndarray:
-    return cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2BGR)
-
 
 def get_alpha_mask(img_rgb: Image.Image, session) -> np.ndarray:
     """Return grayscale alpha mask (H×W uint8) from rembg."""
@@ -166,10 +162,20 @@ def get_alpha_mask(img_rgb: Image.Image, session) -> np.ndarray:
 
 
 def dual_model_mask(img_rgb: Image.Image) -> np.ndarray:
-    """Run both models, return merged alpha mask (H×W uint8)."""
+    """Run both models, return merged alpha mask (H×W uint8) with noise removed."""
     mask_a = get_alpha_mask(img_rgb, _session_birefnet)
     mask_b = get_alpha_mask(img_rgb, _session_u2net)
-    return np.maximum(mask_a, mask_b)
+    merged = np.maximum(mask_a, mask_b)
+
+    # Remove small noise fragments via morphological open (erode then dilate)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    binary = (merged > 10).astype(np.uint8)
+    cleaned = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel, iterations=1)
+    # Zero out pixels that were noise (present before, removed after open)
+    noise_mask = (binary > 0) & (cleaned == 0)
+    merged[noise_mask] = 0
+
+    return merged
 
 
 # ---------------------------------------------------------------------------
@@ -340,27 +346,33 @@ def add_glow(img_rgba: Image.Image) -> Image.Image:
     else:
         radius, opacity = 4, 25
 
-    arr = np.array(img_rgba)
-    alpha = arr[:, :, 3].astype(np.float32)
+    arr = np.array(img_rgba).astype(np.float32)
+    alpha = arr[:, :, 3]
 
-    # White layer, blurred
+    # Build glow: Gaussian blur of the alpha channel, scaled by opacity
     ksize = radius * 2 + 1
     glow_alpha = cv2.GaussianBlur(alpha, (ksize, ksize), sigmaX=radius, sigmaY=radius)
-    glow_alpha = (glow_alpha * (opacity / 255.0)).astype(np.float32)
+    glow_alpha = glow_alpha * (opacity / 255.0)
 
-    # Compose: white glow below the product
-    glow_layer = np.zeros_like(arr, dtype=np.float32)
-    glow_layer[:, :, :3] = 255.0
-    glow_layer[:, :, 3] = glow_alpha
+    # "Over" compositing: glow (white) underneath, product on top
+    # Normalised alpha channels (0..1)
+    a_prod = alpha / 255.0
+    a_glow = glow_alpha / 255.0
 
-    out = arr.astype(np.float32).copy()
-    # Blend: new_alpha = alpha + glow_alpha * (1 - alpha/255)
-    a_norm = out[:, :, 3] / 255.0
-    g_norm = glow_layer[:, :, 3] / 255.0
-    combined_alpha = a_norm + g_norm * (1.0 - a_norm)
-    combined_alpha = np.clip(combined_alpha * 255.0, 0, 255)
+    # Combined alpha: a_out = a_prod + a_glow * (1 - a_prod)
+    a_out = a_prod + a_glow * (1.0 - a_prod)
 
-    out[:, :, 3] = combined_alpha
+    # Avoid division by zero where both are transparent
+    safe = np.where(a_out > 0, a_out, 1.0)
+
+    # Per-channel blend: C_out = (C_prod * a_prod + 255 * a_glow * (1 - a_prod)) / a_out
+    out = arr.copy()
+    for c in range(3):
+        out[:, :, c] = (arr[:, :, c] * a_prod + 255.0 * a_glow * (1.0 - a_prod)) / safe
+
+    out[:, :, 3] = np.clip(a_out * 255.0, 0, 255)
+    out = np.clip(out, 0, 255)
+
     return Image.fromarray(out.astype(np.uint8), "RGBA")
 
 

@@ -1,0 +1,5 @@
+rembg[gpu]
+opencv-python
+numpy
+Pillow
+tqdm
